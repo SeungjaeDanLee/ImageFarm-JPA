@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+                xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+                xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<th:block th:replace="fragments/supervisorHead::supervisorHead"></th:block>
+
+<th:block layout:fragment="script"></th:block>
+<th:block layout:fragment="css"></th:block>
+
+<body oncontextmenu="return false" ondragstart="return false" onselectstart="return false">
+  <div class="d-flex" id="wrapper">
+
+    <th:block th:replace="fragments/supervisorHeader::supervisorHeader"></th:block>
+    <!-- Page Content -->
+    <div id="page-content-wrapper">
+      <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+          <button class="btn btn-primary" id="menu-toggle">메뉴</button>
+
+          <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+          </button>
+
+          <div class="col-md-6 logo-w3 logo">
+              <a href="/index"><img src="/banner/logo.png" alt=" " style="width: 60px"/>
+                  <img src="/banner/IMAGE FARM (1).svg" alt=" " style="width: 200px"/></a>
+          </div>
+
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+              <ul class="navbar-nav ml-auto mt-2 mt-lg-0">
+                  <li class="nav-item" sec:authorize="isAnonymous()">
+                      <a class="nav-link" href="/members/login">로그인</a>
+                  </li>
+                  <li class="nav-item" sec:authorize="isAuthenticated()">
+                      <a class="nav-link" href="/members/logout">로그아웃</a>
+                  </li>
+              </ul>
+          </div>
+      </nav>
+
+    <th:block layout:fragment="content">
+
+    </th:block>
+
+    </div>
+    <!-- /#page-content-wrapper -->
+  </div>
+  <!-- /#wrapper -->
+</body>
+</html>

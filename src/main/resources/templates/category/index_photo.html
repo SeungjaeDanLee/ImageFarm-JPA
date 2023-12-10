@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org"
+	  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	  layout:decorate="~{layouts/layout2}">
+
+
+
+	<script th:inline="javascript">
+
+		$.ajax({
+			url: '/removeFile',
+			type: "POST",
+			data: {fileName: fileName},
+			dataType: "text",
+			beforeSend: function (xhr) {   /*데이터를 전송하기 전에 헤더에 csrf값을 설정한다*/
+				xhr.setRequestHeader(header, token);
+			},
+			success: function (result) {
+				console.log(result);
+				console.log(typeof result);
+				if (result === "true") {
+					console.log("result true==== : " + result);
+					targetDiv.remove();
+				}
+			},
+			error: function (jqXHR, textStatus, errorThrown) {
+				console.log(textStatus);
+			}
+		});
+
+	</script>
+	<div layout:fragment="content">
+<div class="boody searchbody">
+	<form class="form-inline my-2 my-lg-0" th:object="${itemSearchDto}" method="get">
+		<div class="search-mode search-mode2">
+			<label >
+				<input type="text" th:field="*{searchQuery}" placeholder="찾고 싶은 이미지를 검색해보세요!" class="hover">
+			</label>
+			<button type="submit" id="search2"  ><img src="https://s3.ap-northeast-2.amazonaws.com/cdn.wecode.co.kr/icon/search.png"  alt=""></button>
+		</div>
+	</form>
+
+
+	<div class="banner-bootom-w3-agileits" >
+
+		<div class="gallery gallery2">
+			<div class="row" >
+				<th:block th:each="item, status: ${items.getContent()}">
+					<a th:href="'/item/' +${item.id}" class="overscale2 grid1">
+						<img th:src="${item.imgUrl}"  th:alt="${item.itemNm}" >
+						<p class="galleryName" th:text="${item.itemNm}"></p>
+					</a>
+				</th:block>
+			</div>
+			<div class="pagin" th:with="start=${(items.number/maxPage)*maxPage + 1},
+                            end=(${(items.totalPages == 0) ? 1 : (start + (maxPage - 1) < items.totalPages ? start + (maxPage - 1) : items.totalPages)})" >
+				<ul class="pagination justify-content-center">
+
+					<li class="page-item " th:classappend="${items.first}?'disabled'" >
+						<a th:onclick="'javascript:page(' + ${items.number - 1} + ')'" aria-label='Previous' class="page-link">
+							<span aria-hidden='true'>Previous</span>
+						</a>
+					</li>
+
+					<li class="page-item" th:each="page: ${#numbers.sequence(start, end)}" th:classappend="${items.number eq 'page-1'}?'active':''">
+						<a th:onclick="'javascript:page(' + ${page - 1} + ')'" th:inline="text" class="page-link">[[${page}]]</a>
+					</li>
+
+					<li class="page-item" th:classappend="${items.last}?'disabled'">
+						<a th:onclick="'javascript:page(' + ${items.number + 1} + ')'" aria-label='Next' class="page-link">
+							<span aria-hidden='true'>Next</span>
+						</a>
+					</li>
+
+				</ul>
+			</div>
+
+
+		</div>
+	</div>
+</div>
+</div>
+<!-- cart-js -->
+<script src="/js/minicart.js"></script>
+<script>
+	w3ls1.render();
+
+	w3ls1.cart.on('w3sb1_checkout', function (evt) {
+		var items, len, i;
+
+		if (this.subtotal() > 0) {
+			items = this.items();
+
+			for (i = 0, len = items.length; i < len; i++) {
+				items[i].set('shipping', 0);
+				items[i].set('shipping2', 0);
+			}
+		}
+	});
+</script>
+
+</html>

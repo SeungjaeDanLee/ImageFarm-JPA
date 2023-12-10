@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
+<head>
+
+    <title>ImageForm</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="keywords" content="Fashion Club Responsive web template, Bootstrap Web Templates, Flat Web Templates, Android Compatible web template,
+Smartphone Compatible web template, free webdesigns for Nokia, Samsung, LG, SonyEricsson, Motorola web design"/>
+    <script type="application/x-javascript"> addEventListener("load", function () {
+        setTimeout(hideURLbar, 0);
+    }, false);
+
+    function hideURLbar() {
+        window.scrollTo(0, 1);
+    } </script>
+    <!-- css -->
+    <link th:href="@{/css/bootstrap.css}" rel="stylesheet" type="text/css" media="all"/>
+    <link rel="stylesheet" th:href="@{/css/style.css}" type="text/css" media="all"/>
+    <link rel="stylesheet" th:href="@{/css/font-awesome.min.css}" type="text/css" media="all"/>
+    <!--// css -->
+    <!-- font -->
+    <link href="//fonts.googleapis.com/css?family=Source+Sans+Pro" rel="stylesheet">
+    <link href='//fonts.googleapis.com/css?family=Open+Sans:400,300,300italic,400italic,600,600italic,700,700italic,800,800italic'
+          rel='stylesheet' type='text/css'>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap"
+          rel="stylesheet">
+
+    <!-- //font -->
+    <script src="/js/jquery-1.11.1.min.js"></script>
+    <script src="/js/bootstrap.js"></script>
+</head>
+
+<th:block th:fragment="header">
+
+    <div id="header">
+        <div class="col-md-6 logo-w3 logo">
+            <a href="/index"><img src="/banner/logo.png" alt=" " style="width: 60px"/>
+                <img src="/banner/IMAGE FARM (1).svg" alt=" " style="width: 200px"/></a>
+        </div>
+        <div>
+            <nav class="navbar navbar-expand-lg" >
+
+                <div class="container-fluid" id="menubar">
+                    <a class="navbar-brand menu" href="/photo/PHOTO">PICTURE</a>
+                    <a class="navbar-brand menu" href="/illust/ILLUST">ILLUSTRATION</a>
+                    <a class="navbar-brand menu" href="/icon/ICON">ICON</a>
+                </div>
+                <ul class="navbar-nav ml-auto jang">
+                    <li class="loginhead" sec:authorize="hasAnyAuthority('ROLE_SUPERVISOR')">
+                        <a class="nav-link" href="/supervisor/page">관리자</a>
+                    </li>
+                    <li class="loginhead" sec:authorize="hasAnyAuthority('ROLE_ADMIN')">
+                        <a class="nav-link" href="/admin/item/new">상품 등록</a>
+                    </li>
+                    <li class="loginhead" sec:authorize="hasAnyAuthority('ROLE_ADMIN')">
+                        <a class="nav-link" href="/admin/items">상품 관리</a>
+                    </li>
+                    <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
+                        <a class="nav-link dropdown-toggle" href="#" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            마이팜
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+
+                            <li><a class="dropdown-item" sec:authorize="isAuthenticated()" href="/cart">장바구니</a>
+                            </li>
+                            <li><a class="dropdown-item" sec:authorize="isAuthenticated()" href="/orders">구매이력</a>
+                            </li>
+                            <li><a class="dropdown-item" sec:authorize="isAuthenticated()" href="/members/myPage">내 정보</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                <script>
+                    $(document).ready(function () {
+                        $(".dropdown").hover(
+                            function () {
+                                $('.dropdown-menu', this).stop(true, true).slideDown("fast");
+                                $(this).toggleClass('open');
+                            },
+                            function () {
+                                $('.dropdown-menu', this).stop(true, true).slideUp("fast");
+                                $(this).toggleClass('open');
+                            }
+                        );
+                    });
+                </script>
+                <div>
+
+                    <div class="loginbutton">
+
+                        <div class=" loginhead loginbox" sec:authorize="isAnonymous()" style="margin-top: 10px">
+                            <a href="/members/login">로그인</a>
+                        </div>
+                        <div class=" loginhead loginbox" sec:authorize="isAuthenticated()">
+                            <a href="/members/logout">로그아웃</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="header-bottom-w3ls">
+                </div>
+            </nav>
+        </div>
+    </div>
+</th:block>
+
+</html>

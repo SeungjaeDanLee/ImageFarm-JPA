@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{layouts/layout2}">
+
+<!--<head>-->
+<!--    <meta name="_csrf" th:content="${_csrf.token}"/>-->
+<!--    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>-->
+<!--</head>-->
+
+<!-- 사용자 스크립트 추가 -->
+
+<th:block layout:fragment="script">
+
+    <!-- jQuery -->
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.4.min.js" ></script>
+    <!-- iamport.payment.js -->
+    <script type="text/javascript" src="https://cdn.iamport.kr/js/iamport.payment-1.2.0.js"></script>
+    <script src="https://cdn.iamport.kr/v1/iamport.js"></script>
+    <script>
+
+        var IMP = window.IMP;
+        IMP.init("imp76874631");
+
+        var today = new Date();
+        var hours = today.getHours(); // 시
+        var minutes = today.getMinutes();  // 분
+        var seconds = today.getSeconds();  // 초
+        var milliseconds = today.getMilliseconds();
+        var makeMerchantUid = hours +  minutes + seconds + milliseconds;
+
+
+
+        function requestPay() {
+
+            var loggedIn = true;
+
+            if (!loggedIn) {
+                alert("로그인 후 결제가 가능합니다.");
+                window.location.href = "/members/login"; // 로그인 페이지로 리다이렉트
+                return; // 결제 시도 중지
+            } else {
+
+
+                IMP.request_pay({
+                    pg: 'kcp.A52CY',
+                    pay_method: 'card',
+                    merchant_uid: "IMP" + makeMerchantUid,
+                    name: `[[${item.itemNm}]]`,
+                    amount: `[[${item.price}]]`,
+                    buyer_email: '[[${#authentication.name}]]',
+                    buyer_name: '[[${#authentication.name}]]'
+
+
+                }, function (rsp) { // callback
+                    if (rsp.success) {
+                        console.log(rsp);
+                        window.location.href = "/item/pay/" + `[[${item.id}]]`;
+                    } else {
+                        console.log(rsp);
+                    }
+                });
+
+            }
+        }
+    </script>
+
+    <script th:inline="javascript">
+
+
+        $(document).ready(function () {
+            /* 페이지 로딩 시 실행되는 코드 */
+            var initialHeartValue = /*[[${item.heart}]]*/ 0; // 초기 heart 값 가져오기
+            $("#count").change( function(){
+                calculateToalPrice();
+            });
+        });
+
+        function calculateToalPrice(){
+            var count = $("#count").val();
+            var price = $("#price").val();
+            var totalPrice = price*count;
+            $("#totalPrice").html(totalPrice + '원');
+        }
+
+        function order_pay() {
+            var token = $("meta[name='_csrf']").attr("content");
+            var header = $("meta[name='_csrf_header']").attr("content");
+
+            var url = "/order";
+            var paramData = {
+                itemId: $("#itemId").val(),
+                count: $("#count").val()
+            };
+
+            var param = JSON.stringify(paramData);
+
+            $.ajax({
+                url: url,
+                type: "POST",
+                contentType: "application/json",
+                data: param,
+                beforeSend: function (xhr) {
+                    /* 데이터를 전송하기 전에 헤더에 csrf값을 설정 */
+                    xhr.setRequestHeader(header, token);
+                },
+                dataType: "json",
+                cache: false,
+                success: function (result, status) {
+                    requestPay();
+                    location.href = '/index';
+
+                },
+                error: function (jqXHR, status, error) {
+
+                    if (jqXHR.status == '401') {
+                        alert('로그인 후 이용해주세요');
+                        location.href = '/members/login';
+                    } else {
+                        // alert(jqXHR.responseText);
+                    }
+
+                }
+            });
+
+            $(document).ready(function() {
+                $('#ajaxButton').click(function() {
+                    order_pay();
+                });
+
+
+
+            });
+
+        }
+
+
+
+        $(document).ready(function () {
+            /* 페이지 로딩 시 실행되는 코드 */
+            var initialHeartValue = [[${heartCnt}]]; // 초기 heart 값 가져오기
+            setHeartImage(initialHeartValue); // 초기 이미지 설정
+
+        });
+
+        function setHeartImage(heartValue) {
+            console.log(heartValue)
+            var likeImg = $("#likeButton img");
+            if (heartValue === 1) {
+                likeImg.attr("src", "/banner/like.svg");
+            } else {
+                likeImg.attr("src", "/banner/like empty.svg");
+            }
+        }
+
+        function likeButton(){
+
+
+            if($("#likeButton").data("toggle") == 0){
+                $("#likeButton").data("toggle", 1);
+
+            }else if($("#likeButton").data("toggle") == 1) {
+                $("#likeButton").data("toggle", 0);
+            }
+            console.log($("#likeButton").data("toggle"));
+
+            // var toggleValue = $("#likeButton").data("toggle");
+            // toggleValue += 1;
+            // $("#likeButton").data("toggle", toggleValue);
+            // console.log($("#likeButton").data("toggle"));
+
+            $.ajax({
+                url: "/like",
+                type: "GET",
+                contentType: "TEXT",
+                data: {
+                    itemId: "[[${item.id}]]",
+                    heart: $("#likeButton").data("toggle")
+
+                },
+                success: function (result, status) {
+
+                    if(!result){
+                        alert("게시물 추천을 취소하였습니다.");
+                        $(".heartButton").attr("src","/banner/like empty.svg")
+                    }else{
+                        alert("게시물을 추천하였습니다.");
+                        $(".heartButton").attr("src","/banner/like.svg")
+
+                    }
+                },
+                error: function (jqXHR, status, error) {
+
+                    if (jqXHR.status == '401') {
+                        alert('로그인 후 이용해주세요');
+                        location.href = '/members/login';
+                    } else {
+                        // alert(jqXHR.responseText);
+                    }
+
+                }
+            });
+        }
+        function addCart() {
+            var token = $("meta[name='_csrf']").attr("content");
+            var header = $("meta[name='_csrf_header']").attr("content");
+
+            var url = "/cart";
+            var paramData = {
+                itemId: $("#itemId").val(),
+                count: $("#count").val()
+            };
+
+            var param = JSON.stringify(paramData);
+
+            $.ajax({
+                url: url,
+                type: "POST",
+                contentType: "application/json",
+                data: param,
+                beforeSend: function (xhr) {
+                    /* 데이터를 전송하기 전에 헤더에 csrf값을 설정 */
+                    xhr.setRequestHeader(header, token);
+                },
+                dataType: "json",
+                cache: false,
+                success: function (result, status) {
+                    alert("상품을 장바구니에 담았습니다.");
+                    location.href = '/cart';
+                },
+                error: function (jqXHR, status, error) {
+
+                    if (jqXHR.status == '401') {
+                        alert('로그인 후 이용해주세요');
+                        location.href = '/members/login';
+                    } else {
+                        alert(jqXHR.responseText);
+                    }
+
+                }
+            });
+
+        }
+
+    </script>
+</th:block>
+
+
+
+<!-- 사용자 CSS 추가 -->
+<th:block layout:fragment="css">
+    <style>
+
+        .category_txt{
+            font-size: 20px;
+            margin-left: 2rem;
+        }
+
+        .price_txt{
+            font-size: 40px;
+            margin-left: 4rem;
+        }
+
+        .single-price-text{
+            padding-left: 3rem;
+        }
+
+        .imagesolidBox{
+            width: 400px;
+            height: 400px;
+            border: 2px solid #969696;
+            object-fit: contain;
+        }
+
+
+    </style>
+</th:block>
+
+<div layout:fragment="content">
+
+    <input type="hidden" id="itemId" th:value="${item.id}">
+    <div class="products">
+        <div class="container">
+            <div class="single-page">
+                <div class="single-page-row" id="detail-21">
+                    <div class="col-md-6 single-top-left">
+                        <div class="flexslider">
+                            <section class="">
+                                <img th:src="${item.itemImgDtoList[0].imgUrl}" class = "imagesolidBox" th:alt="${item.itemNm}">
+                            </section>
+                        </div>
+                    </div>
+                    <div class="col-md-6 single-top-right" >
+                        <h3 class="item_name"> <div th:text="${item.itemNm}"></div></h3>
+                        <div class="single-rating">
+                            <ul>
+                                <li><i class="fa fa-star-o" aria-hidden="true"></i></li>
+                                <li><i class="fa fa-star-o" aria-hidden="true"></i></li>
+                                <li><i class="fa fa-star-o" aria-hidden="true"></i></li>
+                                <li><i class="fa fa-star-o" aria-hidden="true"></i></li>
+                                <li><i class="fa fa-star-o" aria-hidden="true"></i></li>
+                            </ul>
+                        </div>
+                        <div class="single-price">
+                            <ul>
+                                <li> <div class="category_txt"> <span th:text="${item.category}" ></span>
+                                    <div class="price_txt"><span th:text="${item.price}"></span>\</div>
+                                </div> </li>
+                                <li><a href="#"><i class="fa fa-gift" aria-hidden="true"></i></a></li>
+                            </ul>
+                        </div>
+
+                        <p class="single-price-text" th:text="${item.itemDetail}"></p>
+
+                        <!--                        <form action="#" method="post">-->
+                        <input type="hidden" name="count" id="count" class="form-control" value="1" min="1">
+                        <input type="hidden" name="cmd" value="_cart" />
+                        <input type="hidden" name="add" value="1" />
+                        <!--                            <input type="hidden" name="w3ls1_item" value="Handbag" />-->
+                        <!--                            <input type="hidden" name="amount" value="540.00" />-->
+                        <button type="submit" class="w3ls-cart" onclick="addCart()"><i class="fa fa-cart-plus" aria-hidden="true"></i>장바구니</button>
+                        <!--                        </form>-->
+
+
+                        <button class="w3ls-cart w3ls-cart-like" onclick="requestPay()" sec:authorize="isAuthenticated()">
+                            <i class="fa fa-heart-o" aria-hidden="true"></i>
+                            다운로드
+                        </button>
+                        <button class="w3ls-cart w3ls-cart-like" id="LoginloadButton" sec:authorize="!isAuthenticated()">
+                            <i class="fa fa-heart-o" aria-hidden="true"></i>
+                            다운로드
+                        </button>
+                        <script>
+                            document.getElementById("LoginloadButton").addEventListener("click", function() {
+                                window.location.href = "/members/login";
+                            });
+
+                        </script>
+                    </div>
+                    <div class="clearfix"> </div>
+                </div>
+            </div>
+
+            <!-- collapse-tabs -->
+            <div class="collpse tabs">
+                <h3 class="w3ls-title">About this image</h3>
+                <div class="panel-group collpse" id="accordion" role="tablist" aria-multiselectable="true">
+                    <!--               <div class="panel panel-default">-->
+                    <!--                  <div class="panel-heading" role="tab" id="headingOne">-->
+                    <!--                     <h4 class="panel-title">-->
+                    <!--                        <a class="pa_italic" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne">-->
+                    <!--                           <i class="fa fa-file-text-o fa-icon" aria-hidden="true"></i> Description <span class="fa fa-angle-down fa-arrow" aria-hidden="true"></span> <i class="fa fa-angle-up fa-arrow" aria-hidden="true"></i>-->
+                    <!--                        </a>-->
+                    <!--                     </h4>-->
+                    <!--                  </div>-->
+                    <div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">
+                        <!--                     <div class="panel-body">-->
+                        <!--                        Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident. Ad vegan excepteur butcher vice lomo. Leggings occaecat craft beer farm-to-table, raw denim aesthetic synth nesciunt you probably haven't heard of them accusamus labore sustainable VHS.-->
+                        <!--                     </div>-->
+                    </div>
+                    <!--               </div>-->
+                    <div class="panel panel-default">
+                        <div class="panel-heading" role="tab" id="headingTwo" style="height: 50px;">
+                            <h4 class="panel-title">
+                                <a class="collapsed pa_italic" style="padding: 12.8px 24px">
+                                    <i class="fa fa-info-circle fa-icon" aria-hidden="true"></i> additional information <span class="fa fa-angle-down fa-arrow" aria-hidden="true"></span> <i class="fa fa-angle-up fa-arrow" aria-hidden="true"></i>
+                                </a>
+                            </h4>
+                            <button id="likeButton" th:attr="data-toggle=${heartCnt}"  onclick="likeButton()" style="margin: 3px; width: 5%;">
+                                <img class="heartButton" >
+                                <!--                                <i id="likeIcon" class="fa fa-heart-o" aria-hidden="true" >좋아요</i>-->
+                                <!--                                <span th:text="${item.heart}"></span>-->
+                            </button>
+
+                            <a>
+                                <i>조회수</i>
+                                <span th:text="${item.view +1}"></span>
+                                <!--                                <i>태그</i>-->
+                                <!--                                <span th:text="${item.hashtag}"></span>-->
+                            </a>
+                        </div>
+                        <div>
+
+
+                        </div>
+                        <div id="collapseTwo" class="panel-collapse collapse show" role="tabpanel" aria-labelledby="headingTwo">
+                            <div class="panel-body" style="height: 80px;">
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                <a>
+                                    <span th:text="${item.hashtag}"></span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+</html>

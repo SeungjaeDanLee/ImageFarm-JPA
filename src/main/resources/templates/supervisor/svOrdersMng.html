@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout1}">
+
+<!-- 사용자 스크립트 추가 -->
+<th:block layout:fragment="script">
+    <script th:inline="javascript">
+
+        var token = $("meta[name='_csrf']").attr("content");
+        var header = $("meta[name='_csrf_header']").attr("content");
+
+        $(document).ready(function () {
+            $("#searchBtn").on("click", function (e) {
+                e.preventDefault();
+                page(0);
+            });
+        });
+
+        function page(page) {
+            var searchDateType = $("#searchDateType").val();
+            var searchSellStatus = $("#searchSellStatus").val();
+            var searchBy = $("#searchBy").val();
+            var searchQuery = $("#searchQuery").val();
+
+            location.href = "/supervisor/members/" + page + "?searchDateType=" + searchDateType
+                + "&searchSellStatus=" + searchSellStatus
+                + "&searchBy=" + searchBy
+                + "&searchQuery=" + searchQuery;
+        }
+
+    </script>
+</th:block>
+
+<!-- 사용자 CSS 추가 -->
+<th:block layout:fragment="css">
+    <style>
+        select {
+            margin-right: 10px;
+        }
+    </style>
+</th:block>
+
+<div layout:fragment="content">
+    <table class="table">
+        <thead>
+        <tr>
+            <th>주문 번호</th>
+            <th>주문 일자</th>
+            <th>구매자</th>
+            <th>구매 상태</th>
+            <th>구매자 번호</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Thymeleaf 반복문을 사용하여 구매 목록을 표시합니다. -->
+        <tr th:each="order, status: ${orders.getContent()}">
+            <td th:text="${order.id}"></td>
+            <td th:text="${order.orderDate}"></td>
+            <td th:text="${order.createdBy}"></td>
+            <td th:text="${order.orderStatus} ? '주문' : '주문 취소'"></td>
+            <td th:text="${order.member.getId()}"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- 페이지 내비게이션 -->
+    <div th:if="${orders.totalPages > 1}" class="pagination justify-content-center">
+        <ul class="pagination">
+            <li th:class="${orders.first} ? 'disabled' : ''" class="page-item">
+                <a th:if="${not orders.first}" th:href="@{/supervisor/orders(page=0, size=${orders.size})}" class="page-link" aria-label="First">
+                    <span aria-hidden="true">First</span>
+                </a>
+            </li>
+            <li th:class="${orders.first} ? 'disabled'" class="page-item">
+                <a th:if="${not orders.first}"
+                   th:href="@{/supervisor/orders(page=${orders.number - 1}, size=${orders.size})}" class="page-link"
+                   aria-label="Previous">
+                    <span aria-hidden='true'>Previous</span>
+                </a>
+            </li>
+            <li th:each="pageNumber : ${#numbers.sequence(0, orders.totalPages - 1)}"
+                th:class="${orders.number == pageNumber} ? 'active' : ''" class="page-item">
+                <a th:href="@{/supervisor/orders(page=${pageNumber}, size=${orders.size})}" class="page-link"
+                   th:text="${pageNumber + 1}"></a>
+            </li>
+            <li th:class="${orders.last} ? 'disabled' " class="page-item">
+                <a th:if="${not orders.last}"
+                   th:href="@{/supervisor/orders(page=${orders.number + 1}, size=${orders.size})}" class="page-link"
+                   aria-label="Next">
+                    <span aria-hidden='true'>Next</span>
+                </a>
+            </li>
+            <li th:class="${orders.last} ? 'disabled' : ''" class="page-item">
+                <a th:if="${not orders.last}" th:href="@{/supervisor/orders(page=${orders.totalPages - 1}, size=${orders.size})}" class="page-link" aria-label="Last">
+                    <span aria-hidden="true">Last</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+</div>
+
+
+</html>

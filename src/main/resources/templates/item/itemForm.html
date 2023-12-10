@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout2}">
+
+<!-- 사용자 스크립트 추가 -->
+<th:block layout:fragment="script">
+
+    <script th:inline="javascript">
+        $(document).ready(function(){
+            var errorMessage = [[${errorMessage}]];
+            if(errorMessage != null){
+                alert(errorMessage);
+            }
+
+            bindDomEvent();
+
+        });
+
+        function bindDomEvent(){
+            $(".custom-file-input").on("change", function() {
+                var fileName = $(this).val().split("\\").pop();  //이미지 파일명
+                var fileExt = fileName.substring(fileName.lastIndexOf(".")+1); // 확장자 추출
+                fileExt = fileExt.toLowerCase(); //소문자 변환
+
+                if(fileExt != "jpg" && fileExt != "jpeg" && fileExt != "gif" && fileExt != "png" && fileExt != "bmp"){
+                    alert("이미지 파일만 등록이 가능합니다.");
+                    return;
+                }
+
+                $(this).siblings(".custom-file-label").html(fileName);
+            });
+        }
+        $(function() {
+            $("#uploadBtn").on("click", function() {
+                upload();
+            });
+        });
+
+        function upload() {
+            let form = $("#uploadForm")[0];
+            let formData = new FormData(form);
+
+            //추가된 해시태그를 모두 FormData 객체에 저장하기
+            let hashtagList = document.getElementsByClassName("hashtag-value");
+            for(let i = 0; i < hashtagList.length; i++) {
+                formData.append("hashtagList[" + i + "]", hashtagList[i].innerText);
+            }
+
+
+            $.ajax({
+                type: "POST",
+                url: `/api/upload`,
+                data: formData,
+                contentType: false, //false 로 선언 시 content-type 헤더가 multipart/form-data로 전송되게 함
+                processData: false  //false로 선언 시 formData를 string으로 변환하지 않음
+            }).done(resp => {
+                console.log(resp);
+
+                location.href=`http://localhost:8080/user/${resp.data}`
+            }).fail(error => {
+                console.log(error);
+            });
+        }
+
+        // 해시 태그 추가, 삭제 로직
+        function addHashtag() {
+            let hashtag = $("#hashtagData").val();
+            let item;
+            if(hashtag.length > 0){
+                item = getHashtagItem(hashtag);
+                $("#hashList").append(item);
+                $("#hashtagData").val("");
+
+                //해시태그 리스트 저장
+                // let form = $("#uploadForm")[0];
+                // let formData = new FormData(form);
+                //추가된 해시태그를 모두 FormData 객체에 저장하기
+                let hashtagList = document.getElementsByClassName("hashtag-value");
+                let hashtagData = "";
+
+                for(let i = 0; i < hashtagList.length; i++) {
+                    if(i === hashtagList.length - 1) {
+                        hashtagData += hashtagList[i].innerText;
+                    } else if(i < hashtagList.length) {
+                        hashtagData += hashtagList[i].innerText + ",";
+                    }
+                }
+                $("#hashtag").val(hashtagData);
+
+            }
+        }
+
+        function removeHashtag(hashtag) {
+            document.getElementById(hashtag).remove();
+        }
+
+        function getHashtagItem(hashtag) {
+            let item =
+                `<div class="hashtag" id="${hashtag}">
+			<span class="hashtag-value">#${hashtag}</span>
+			<button type="button" onclick="removeHashtag('${hashtag}')">×</button>
+		        </div>`
+
+            return item;
+        }
+    </script>
+
+</th:block>
+
+<!-- 사용자 CSS 추가 -->
+<th:block layout:fragment="css">
+    <style>
+        .input-group {
+            margin-bottom : 15px
+        }
+        .img-div {
+            margin-bottom : 10px
+        }
+        .fieldError {
+            color: #bd2130;
+        }
+
+        .btn-check{
+            opacity: 0;
+
+        }
+
+        .btn-outline-primary:hover {
+            color: #fff;
+            background-color: #007bff;
+            border-color: #007bff;
+
+
+        }
+
+    </style>
+
+</th:block>
+
+<div layout:fragment="content" class="row g-3" style="margin: 5% 0 15% 0">
+
+    <form role="form" method="post" enctype="multipart/form-data" th:object="${itemFormDto}" id="uploadForm">
+        <input type="hidden"  th:field="*{hashtag}">
+
+
+        <p class="h2">
+            상품 등록 및 수정
+        </p>
+        <input type="hidden" th:field="*{id}">
+        <div class="form-group">
+            <select th:field="*{itemSellStatus}" class="custom-select">
+                <option value="SELL">판매중</option>
+                <option value="SOLD_OUT">품절</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <div class="input-group-prepend">
+                <span class="input-group-text">상품명</span>
+            </div>
+            <input type="text" th:field="*{itemNm}" class="form-control" placeholder="상품명을 입력해주세요">
+        </div>
+        <p th:if="${#fields.hasErrors('itemNm')}" th:errors="*{itemNm}" class="fieldError">Incorrect data</p>
+
+        <div class="input-group">
+            <div class="input-group-prepend">
+                <span class="input-group-text">카테고리</span>
+            </div>
+            <div class="form-group">
+                <select th:field="*{category}" class="custom-select">
+                    <option value="ICON">아이콘</option>
+                    <option value="ILLUST">일러스트</option>
+                    <option value="PHOTO">사진</option>
+                </select>
+            </div>
+
+        </div>
+
+
+        <div class="input-group">
+            <div class="input-group-prepend">
+                <span class="input-group-text">가격</span>
+            </div>
+            <input type="number" th:field="*{price}" class="form-control" placeholder="상품의 가격을 입력해주세요">
+        </div>
+        <p th:if="${#fields.hasErrors('price')}" th:errors="*{price}" class="fieldError">Incorrect data</p>
+        <div class="input-group">
+            <div class="input-group-prepend">
+                <span class="input-group-text">해쉬태그</span>
+            </div>
+            <input type="text"  class="form-control" placeholder="상품의 해쉬태그를 입력해주세요" id="hashtagData"
+                   name="hashtagData">
+            <button type="button" class="cta blue" onclick="addHashtag()">추가</button>
+
+            <div class="hashList" id="hashList">
+            </div>
+
+        </div>
+
+
+        <div class="input-group">
+            <div class="input-group-prepend">
+                <span class="input-group-text">재고</span>
+            </div>
+            <input type="number" th:field="*{stockNumber}" class="form-control" placeholder="상품의 재고를 입력해주세요">
+        </div>
+        <p th:if="${#fields.hasErrors('stockNumber')}" th:errors="*{stockNumber}" class="fieldError">Incorrect data</p>
+        <div class="input-group">
+            <div class="input-group-prepend">
+                <span class="input-group-text">상품 상세 내용</span>
+            </div>
+            <textarea class="form-control" aria-label="With textarea" th:field="*{itemDetail}"></textarea>
+        </div>
+        <p th:if="${#fields.hasErrors('itemDetail')}" th:errors="*{itemDetail}" class="fieldError">Incorrect data</p>
+
+        <div th:if="${#lists.isEmpty(itemFormDto.itemImgDtoList)}">
+            <div class="form-group" th:each="num: ${#numbers.sequence(1,1)}">
+<!--            <div class="form-group" th:each="num: ${#numbers.sequence(1,5)}">-->
+                <div class="custom-file img-div">
+                    <input type="file" class="custom-file-input" name="itemImgFile">
+                    <label class="custom-file-label" th:text="상품이미지 + ${num}"></label>
+                </div>
+            </div>
+        </div>
+
+        <div th:if = "${not #lists.isEmpty(itemFormDto.itemImgDtoList)}">
+            <div class="form-group" th:each="itemImgDto, status: ${itemFormDto.itemImgDtoList}">
+                <div class="custom-file img-div">
+                    <input type="file" class="custom-file-input" name="itemImgFile">
+                    <input type="hidden" name="itemImgIds" th:value="${itemImgDto.id}">
+                    <label class="custom-file-label" th:text="${not #strings.isEmpty(itemImgDto.oriImgName)} ? ${itemImgDto.oriImgName} : '상품이미지' + ${status.index+1}"></label>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${#strings.isEmpty(itemFormDto.id)}" style="text-align: center">
+            <button th:formaction="@{'/admin/item/new'}" type="submit" class="btn btn-primary" >저장</button>
+        </div>
+        <div th:unless="${#strings.isEmpty(itemFormDto.id)}" style="text-align: center">
+            <button th:formaction="@{'/admin/item/' + ${itemFormDto.id} }" type="submit" class="btn btn-primary">수정</button>
+        </div>
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+    </form>
+
+</div>
+
+</html>

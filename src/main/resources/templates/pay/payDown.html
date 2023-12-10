@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout2}">
+
+<!--<head>-->
+<!--    <meta name="_csrf" th:content="${_csrf.token}"/>-->
+<!--    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>-->
+<!--</head>-->
+
+<!-- 사용자 스크립트 추가 -->
+
+<th:block layout:fragment="script">
+
+    <script th:inline="javascript">
+        $(document).ready(function () {
+
+            calculateToalPrice();
+
+            $("#count").change(function () {
+                calculateToalPrice();
+            });
+        });
+
+        function calculateToalPrice() {
+            var count = $("#count").val();
+            var price = $("#price").val();
+            var totalPrice = price * count;
+            $("#totalPrice").html(totalPrice + '원');
+        }
+
+        function order_pay() {
+            var token = $("meta[name='_csrf']").attr("content");
+            var header = $("meta[name='_csrf_header']").attr("content");
+
+            var url = "/order";
+            var paramData = {
+                itemId: $("#itemId").val(),
+                count: $("#count").val()
+            };
+
+            var param = JSON.stringify(paramData);
+
+            $.ajax({
+                url: url,
+                type: "POST",
+                contentType: "application/json",
+                data: param,
+                beforeSend: function (xhr) {
+                    /* 데이터를 전송하기 전에 헤더에 csrf값을 설정 */
+                    xhr.setRequestHeader(header, token);
+                },
+                dataType: "json",
+                cache: false,
+                success: function (result, status) {
+                    requestPay();
+                    location.href = '/index';
+
+                },
+                error: function (jqXHR, status, error) {
+
+                    if (jqXHR.status == '401') {
+                        alert('로그인 후 이용해주세요');
+                        location.href = '/members/login';
+                    } else {
+                        // alert(jqXHR.responseText);
+                    }
+
+                }
+            });
+
+            $(document).ready(function () {
+                $('#ajaxButton').click(function () {
+                    order_pay();
+                });
+
+
+            });
+
+        }
+
+    </script>
+</th:block>
+
+
+<!-- 사용자 CSS 추가 -->
+<th:block layout:fragment="css">
+    <style>
+
+        .products-down {
+            width: 30%;
+            display: block;
+            margin: auto;
+            padding-top: 4rem;
+            padding-bottom: 10rem;
+
+        }
+
+        .contain {
+            object-fit: fill;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn_div {
+            margin-top: 3rem;
+            margin-bottom: 3rem;
+
+            background: none;
+            /*border: 1px solid  #00e58b;*/
+            /*color: #00e58b;*/
+            width: 28%;
+            font-weight: 300;
+            padding: 0.6em 0;
+            -webkit-transition: .5s all;
+            -moz-transition: .5s all;
+            -o-transition: .5s all;
+            -ms-transition: .5s all;
+            transition: .5s all;
+            display: inline-block;
+            background: #00e58b;
+            outline: none;
+            border: 1px solid #00e58b;
+            color: #fff;
+        }
+
+        .btn_div:hover {
+            background: #00e58b;
+            color: #fff;
+        }
+
+
+    </style>
+</th:block>
+
+<div layout:fragment="content">
+    <div class="products-down">
+        <img th:src="${item.itemImgDtoList[0].imgUrl}" th:alt="${item.itemNm}" class="contain">
+        <div class="btn_div">
+            <button class="single-top-rigt w3ls-cart" style="display: block; margin: auto;">
+                <a th:href="@{'/download/' + ${item.itemImgDtoList[0].id}}" download="image.jpg">
+                    <i class="fa fa-heart-o" aria-hidden="true"></i>
+                    다운로드 하기
+                </a></button>
+        </div>
+    </div>
+    <div class="clearfix"></div>
+</div>
+
+</html>

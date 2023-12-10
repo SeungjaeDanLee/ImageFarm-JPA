@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <th:block th:fragment="supervisorHeader">
+        <!-- Sidebar -->
+        <div class="bg-light border-right" id="sidebar-wrapper">
+            <div class="sidebar-heading">
+                <a href="/supervisor/page" style="color: black;">관리자 홈</a>
+            </div>
+            <div class="list-group list-group-flush">
+                <a href="/supervisor/members" class="list-group-item list-group-item-action bg-light">사용자 정보</a>
+                <a href="/supervisor/items" class="list-group-item list-group-item-action bg-light">상품 정보</a>
+                <a href="/supervisor/orders" class="list-group-item list-group-item-action bg-light">전체 구매 목록</a>
+            </div>
+        </div>
+        <!-- /#sidebar-wrapper -->
+    </th:block>
+</html>

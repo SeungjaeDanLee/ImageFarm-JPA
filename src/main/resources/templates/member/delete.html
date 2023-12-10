@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout2}">
+
+<div layout:fragment="content" class="login">
+
+    <div class="main-agileits">
+        <div class="form-w3agile">
+            <h3>회원 탈퇴</h3>
+            <form action="/members/delete" method="post">
+                <p>회원 탈퇴를 진행하시겠습니까?</p>
+                <input type="submit" value="탈퇴">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            </form>
+        </div>
+    </div>
+</div>
+
+</html>
